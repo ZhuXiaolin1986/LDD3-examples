@@ -23,10 +23,12 @@
 #include <linux/fs.h>     /* everything... */
 #include <linux/types.h>  /* size_t */
 #include <linux/completion.h>
+#include <linux/device.h>
 
 MODULE_LICENSE("Dual BSD/GPL");
 
 static int complete_major = 0;
+static struct class *complete_class = NULL;
 
 DECLARE_COMPLETION(comp);
 
@@ -68,6 +70,11 @@ int complete_init(void)
 		return result;
 	if (complete_major == 0)
 		complete_major = result; /* dynamic */
+
+    complete_class = class_create(THIS_MODULE, "complete");
+    if(complete_class)
+        device_create(complete_class, NULL, MKDEV(complete_major, 0), NULL, "complete");
+
 	return 0;
 }
 

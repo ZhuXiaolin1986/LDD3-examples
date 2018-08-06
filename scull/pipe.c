@@ -30,6 +30,7 @@
 #include <linux/sched.h>
 #include <linux/sched/signal.h>
 #include <linux/seq_file.h>
+#include <linux/device.h>
 
 #include "scull.h"		/* local definitions */
 
@@ -48,6 +49,7 @@ struct scull_pipe {
 static int scull_p_nr_devs = SCULL_P_NR_DEVS;	/* number of pipe devices */
 int scull_p_buffer =  SCULL_P_BUFFER;	/* buffer size */
 dev_t scull_p_devno;			/* Our first device number */
+static struct class *scullp_class = NULL;
 
 module_param(scull_p_nr_devs, int, 0);	/* FIXME check perms */
 module_param(scull_p_buffer, int, 0);
@@ -333,6 +335,9 @@ static void scull_p_setup_cdev(struct scull_pipe *dev, int index)
 	/* Fail gracefully if need be */
 	if (err)
 		printk(KERN_NOTICE "Error %d adding scullpipe%d", err, index);
+
+    if(scullp_class)
+        device_create(scullp_class, NULL, devno, NULL, "scullp%d", index);
 }
 
  
@@ -350,8 +355,10 @@ int scull_p_init(dev_t firstdev)
 		return 0;
 	}
 	scull_p_devno = firstdev;
+    scullp_class = class_create(THIS_MODULE, "scullp");
 	scull_p_devices = kmalloc(scull_p_nr_devs * sizeof(struct scull_pipe), GFP_KERNEL);
 	if (scull_p_devices == NULL) {
+        class_destroy(scullp_class);
 		unregister_chrdev_region(firstdev, scull_p_nr_devs);
 		return 0;
 	}
@@ -384,10 +391,14 @@ void scull_p_cleanup(void)
 		return; /* nothing else to release */
 
 	for (i = 0; i < scull_p_nr_devs; i++) {
+        if(scullp_class)
+            device_destroy(scullp_class, scull_p_devno+i);
 		cdev_del(&scull_p_devices[i].cdev);
 		kfree(scull_p_devices[i].buffer);
 	}
 	kfree(scull_p_devices);
+    if(scullp_class)
+        class_destroy(scullp_class);
 	unregister_chrdev_region(scull_p_devno, scull_p_nr_devs);
 	scull_p_devices = NULL; /* pedantic */
 }

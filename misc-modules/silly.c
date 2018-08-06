@@ -36,8 +36,10 @@
 
 #include <asm/io.h>
 #include <asm/uaccess.h>
+#include <linux/device.h>
 
 int silly_major = 0;
+static struct class *silly_class = NULL;
 module_param(silly_major, int, 0);
 MODULE_AUTHOR("Alessandro Rubini");
 MODULE_LICENSE("Dual BSD/GPL");
@@ -274,6 +276,11 @@ int silly_init(void)
 	}
 	if (silly_major == 0)
 		silly_major = result; /* dynamic */
+
+    silly_class = class_create(THIS_MODULE, "silly");
+    if(silly_class)
+        device_create(silly_class, NULL, MKDEV(silly_major, 0), NULL, "silly");
+
 	/*
 	 * Set up our I/O range.
 	 */
@@ -286,6 +293,11 @@ int silly_init(void)
 void silly_cleanup(void)
 {
 	iounmap(io_base);
+    if(silly_class)
+    {
+        device_destroy(silly_class, MKDEV(silly_major, 0));
+        class_destroy(silly_class);
+    }
 	unregister_chrdev(silly_major, "silly");
 }
 

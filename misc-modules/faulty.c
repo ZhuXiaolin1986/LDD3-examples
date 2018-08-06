@@ -22,11 +22,13 @@
 #include <linux/fs.h>     /* everything... */
 #include <linux/types.h>  /* size_t */
 #include <linux/uaccess.h>
+#include <linux/device.h>
 
 MODULE_LICENSE("Dual BSD/GPL");
 
 
 int faulty_major = 0;
+static struct class *faulty_class = NULL;
 
 ssize_t faulty_read(struct file *filp, char __user *buf,
 		    size_t count, loff_t *pos)
@@ -76,11 +78,20 @@ int faulty_init(void)
 	if (faulty_major == 0)
 		faulty_major = result; /* dynamic */
 
+    faulty_class = class_create(THIS_MODULE, "faulty");
+    if(faulty_class)
+        device_create(faulty_class, NULL, MKDEV(faulty_major, 0), NULL, "faulty");
+
 	return 0;
 }
 
 void faulty_cleanup(void)
 {
+    if(faulty_class)
+    {
+        device_destroy(faulty_class, MKDEV(faulty_major, 0));
+        class_destroy(faulty_class);
+    }
 	unregister_chrdev(faulty_major, "faulty");
 }
 

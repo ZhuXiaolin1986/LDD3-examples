@@ -29,6 +29,7 @@
 #include <linux/aio.h>
 #include <linux/uaccess.h>
 #include <uapi/linux/uio.h>
+#include <linux/device.h>
 #include "scullc.h"		/* local definitions */
 
 
@@ -45,6 +46,7 @@ MODULE_AUTHOR("Alessandro Rubini");
 MODULE_LICENSE("Dual BSD/GPL");
 
 struct scullc_dev *scullc_devices; /* allocated in scullc_init */
+static struct class *scullc_class = NULL;
 
 int scullc_trim(struct scullc_dev *dev);
 void scullc_cleanup(void);
@@ -441,6 +443,9 @@ static void scullc_setup_cdev(struct scullc_dev *dev, int index)
 	/* Fail gracefully if need be */
 	if (err)
 		printk(KERN_NOTICE "Error %d adding scull%d", err, index);
+
+    if(scullc_class)
+        device_create(scullc_class, NULL, devno, NULL, "scullc%d", index);
 }
 
 
@@ -466,7 +471,7 @@ int scullc_init(void)
 	if (result < 0)
 		return result;
 
-	
+    scullc_class = class_create(THIS_MODULE, "scullc");
 	/* 
 	 * allocate the devices -- we can't have them static, as the number
 	 * can be specified at load time
@@ -497,6 +502,7 @@ int scullc_init(void)
 	return 0; /* succeed */
 
   fail_malloc:
+    class_destroy(scullc_class);
 	unregister_chrdev_region(dev, scullc_devs);
 	return result;
 }
@@ -512,6 +518,8 @@ void scullc_cleanup(void)
 #endif
 
 	for (i = 0; i < scullc_devs; i++) {
+        if(scullc_class)
+            device_destroy(scullc_class, scullc_major+i);
 		cdev_del(&scullc_devices[i].cdev);
 		scullc_trim(scullc_devices + i);
 	}
@@ -519,6 +527,8 @@ void scullc_cleanup(void)
 
 	if (scullc_cache)
 		kmem_cache_destroy(scullc_cache);
+    if(scullc_class)
+        class_destroy(scullc_class);
 	unregister_chrdev_region(MKDEV (scullc_major, 0), scullc_devs);
 }
 

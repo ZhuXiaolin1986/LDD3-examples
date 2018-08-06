@@ -23,10 +23,12 @@
 #include <linux/fs.h>     /* everything... */
 #include <linux/types.h>  /* size_t */
 #include <linux/wait.h>
+#include <linux/device.h>
 
 MODULE_LICENSE("Dual BSD/GPL");
 
 static int sleepy_major = 0;
+static struct class *sleepy_class = NULL;
 
 static DECLARE_WAIT_QUEUE_HEAD(wq);
 static int flag = 0;
@@ -71,11 +73,22 @@ int sleepy_init(void)
 		return result;
 	if (sleepy_major == 0)
 		sleepy_major = result; /* dynamic */
+
+    sleepy_class = class_create(THIS_MODULE, "sleepy");
+    if(sleepy_class)
+        device_create(sleepy_class, NULL, MKDEV(sleepy_major, 0), NULL, "sleepy");
+
 	return 0;
 }
 
 void sleepy_cleanup(void)
 {
+    if(sleepy_class)
+    {
+        device_destroy(sleepy_class, MKDEV(sleepy_major, 0));
+        class_destroy(sleepy_class);
+    }
+
 	unregister_chrdev(sleepy_major, "sleepy");
 }
 

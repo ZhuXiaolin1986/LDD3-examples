@@ -31,11 +31,12 @@
 #include <linux/cred.h> /* current_uid(), current_euid() */
 #include <linux/sched.h>
 #include <linux/sched/signal.h>
+#include <linux/device.h>
 
 #include "scull.h"        /* local definitions */
 
 static dev_t scull_a_firstdev;  /* Where our range begins */
-
+static struct class *sculla_class = NULL;
 /*
  * These devices fall back on the main scull operations. They only
  * differ in the implementation of open() and close()
@@ -363,6 +364,8 @@ static void scull_access_setup (dev_t devno, struct scull_adev_info *devinfo)
 		kobject_put(&dev->cdev.kobj);
 	} else
 		printk(KERN_NOTICE "%s registered at %x\n", devinfo->name, devno);
+        if(sculla_class)
+            device_create(sculla_class, NULL, devno, NULL, devinfo->name);
 }
 
 
@@ -377,6 +380,7 @@ int scull_access_init(dev_t firstdev)
 		return 0;
 	}
 	scull_a_firstdev = firstdev;
+    sculla_class = class_create(THIS_MODULE, "sculla");
 
 	/* Set up each device. */
 	for (i = 0; i < SCULL_N_ADEVS; i++)
@@ -396,6 +400,8 @@ void scull_access_cleanup(void)
 	/* Clean up the static devs */
 	for (i = 0; i < SCULL_N_ADEVS; i++) {
 		struct scull_dev *dev = scull_access_devs[i].sculldev;
+        if(sculla_class)
+            device_destroy(sculla_class, scull_a_firstdev+i);
 		cdev_del(&dev->cdev);
 		scull_trim(scull_access_devs[i].sculldev);
 	}
@@ -406,6 +412,9 @@ void scull_access_cleanup(void)
 		scull_trim(&(lptr->device));
 		kfree(lptr);
 	}
+
+    if(sculla_class)
+        class_destroy(sculla_class);
 
 	/* Free up our number space */
 	unregister_chrdev_region(scull_a_firstdev, SCULL_N_ADEVS);
