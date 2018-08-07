@@ -578,8 +578,8 @@ void scull_cleanup_module(void)
 	/* Get rid of our char dev entries */
 	if (scull_devices) {
 		for (i = 0; i < scull_nr_devs; i++) {
-            if(scull_class)
-                device_destroy(scull_class, MKDEV(scull_major, scull_minor+i));
+			if(scull_class)
+				device_destroy(scull_class, MKDEV(scull_major, scull_minor+i));
 
 			scull_trim(scull_devices + i);
 			cdev_del(&scull_devices[i].cdev);
@@ -591,8 +591,8 @@ void scull_cleanup_module(void)
 	scull_remove_proc();
 #endif
 
-    if(scull_class)
-        class_destroy(scull_class);
+	if(scull_class)
+		class_destroy(scull_class);
 
 	/* cleanup_module is never called if registering failed */
 	unregister_chrdev_region(devno, scull_nr_devs);
@@ -619,8 +619,8 @@ static void scull_setup_cdev(struct scull_dev *dev, int index)
 	if (err)
 		printk(KERN_NOTICE "Error %d adding scull%d", err, index);
 
-    if(scull_class)
-        device_create(scull_class, NULL, MKDEV(scull_major, index), NULL, "scull%d", index);
+	if(scull_class)
+		device_create(scull_class, NULL, MKDEV(scull_major, index), NULL, "scull%d", index);
 }
 
 
@@ -645,7 +645,7 @@ int scull_init_module(void)
 		printk(KERN_WARNING "scull: can't get major %d\n", scull_major);
 		return result;
 	}
-    scull_class = class_create(THIS_MODULE, "scull");
+	scull_class = class_create(THIS_MODULE, "scull");
 
         /* 
 	 * allocate the devices -- we can't have them static, as the number

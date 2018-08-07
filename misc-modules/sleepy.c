@@ -74,20 +74,20 @@ int sleepy_init(void)
 	if (sleepy_major == 0)
 		sleepy_major = result; /* dynamic */
 
-    sleepy_class = class_create(THIS_MODULE, "sleepy");
-    if(sleepy_class)
-        device_create(sleepy_class, NULL, MKDEV(sleepy_major, 0), NULL, "sleepy");
+	sleepy_class = class_create(THIS_MODULE, "sleepy");
+	if(sleepy_class)
+		device_create(sleepy_class, NULL, MKDEV(sleepy_major, 0), NULL, "sleepy");
 
 	return 0;
 }
 
 void sleepy_cleanup(void)
 {
-    if(sleepy_class)
-    {
-        device_destroy(sleepy_class, MKDEV(sleepy_major, 0));
-        class_destroy(sleepy_class);
-    }
+	if(sleepy_class)
+	{
+		device_destroy(sleepy_class, MKDEV(sleepy_major, 0));
+		class_destroy(sleepy_class);
+	}
 
 	unregister_chrdev(sleepy_major, "sleepy");
 }

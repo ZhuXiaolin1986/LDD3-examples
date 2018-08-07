@@ -78,20 +78,20 @@ int faulty_init(void)
 	if (faulty_major == 0)
 		faulty_major = result; /* dynamic */
 
-    faulty_class = class_create(THIS_MODULE, "faulty");
-    if(faulty_class)
-        device_create(faulty_class, NULL, MKDEV(faulty_major, 0), NULL, "faulty");
+	faulty_class = class_create(THIS_MODULE, "faulty");
+	if(faulty_class)
+		device_create(faulty_class, NULL, MKDEV(faulty_major, 0), NULL, "faulty");
 
 	return 0;
 }
 
 void faulty_cleanup(void)
 {
-    if(faulty_class)
-    {
-        device_destroy(faulty_class, MKDEV(faulty_major, 0));
-        class_destroy(faulty_class);
-    }
+	if(faulty_class)
+	{
+		device_destroy(faulty_class, MKDEV(faulty_major, 0));
+		class_destroy(faulty_class);
+	}
 	unregister_chrdev(faulty_major, "faulty");
 }
 

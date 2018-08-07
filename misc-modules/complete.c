@@ -71,15 +71,19 @@ int complete_init(void)
 	if (complete_major == 0)
 		complete_major = result; /* dynamic */
 
-    complete_class = class_create(THIS_MODULE, "complete");
-    if(complete_class)
-        device_create(complete_class, NULL, MKDEV(complete_major, 0), NULL, "complete");
+	complete_class = class_create(THIS_MODULE, "complete");
+	if(complete_class)
+		device_create(complete_class, NULL, MKDEV(complete_major, 0), NULL, "complete");
 
 	return 0;
 }
 
 void complete_cleanup(void)
 {
+	if(complete_class) {
+		device_destroy(complete_class, MKDEV(complete_major, 0));
+		class_destroy(complete_class);
+	}
 	unregister_chrdev(complete_major, "complete");
 }
 

@@ -444,8 +444,8 @@ static void scullc_setup_cdev(struct scullc_dev *dev, int index)
 	if (err)
 		printk(KERN_NOTICE "Error %d adding scull%d", err, index);
 
-    if(scullc_class)
-        device_create(scullc_class, NULL, devno, NULL, "scullc%d", index);
+	if(scullc_class)
+		device_create(scullc_class, NULL, devno, NULL, "scullc%d", index);
 }
 
 
@@ -471,7 +471,7 @@ int scullc_init(void)
 	if (result < 0)
 		return result;
 
-    scullc_class = class_create(THIS_MODULE, "scullc");
+	scullc_class = class_create(THIS_MODULE, "scullc");
 	/* 
 	 * allocate the devices -- we can't have them static, as the number
 	 * can be specified at load time
@@ -502,7 +502,7 @@ int scullc_init(void)
 	return 0; /* succeed */
 
   fail_malloc:
-    class_destroy(scullc_class);
+	class_destroy(scullc_class);
 	unregister_chrdev_region(dev, scullc_devs);
 	return result;
 }
@@ -518,8 +518,8 @@ void scullc_cleanup(void)
 #endif
 
 	for (i = 0; i < scullc_devs; i++) {
-        if(scullc_class)
-            device_destroy(scullc_class, scullc_major+i);
+		if(scullc_class)
+			device_destroy(scullc_class, scullc_major+i);
 		cdev_del(&scullc_devices[i].cdev);
 		scullc_trim(scullc_devices + i);
 	}
@@ -527,8 +527,8 @@ void scullc_cleanup(void)
 
 	if (scullc_cache)
 		kmem_cache_destroy(scullc_cache);
-    if(scullc_class)
-        class_destroy(scullc_class);
+	if(scullc_class)
+		class_destroy(scullc_class);
 	unregister_chrdev_region(MKDEV (scullc_major, 0), scullc_devs);
 }
 
