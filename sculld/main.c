@@ -44,6 +44,7 @@ MODULE_AUTHOR("Alessandro Rubini");
 MODULE_LICENSE("Dual BSD/GPL");
 
 struct sculld_dev *sculld_devices; /* allocated in sculld_init */
+static struct class *sculld_class = NULL;
 
 int sculld_trim(struct sculld_dev *dev);
 void sculld_cleanup(void);
@@ -457,6 +458,9 @@ static void sculld_setup_cdev(struct sculld_dev *dev, int index)
 	/* Fail gracefully if need be */
 	if (err)
 		printk(KERN_NOTICE "Error %d adding scull%d", err, index);
+
+	if(sculld_class)
+		device_create(sculld_class, NULL, devno, NULL, "sculld%d", index);
 }
 
 static ssize_t sculld_show_dev(struct device *ddev, struct device_attribute *attr, char *buf)
@@ -500,6 +504,7 @@ int sculld_init(void)
 	if (result < 0)
 		return result;
 
+	sculld_class = class_create(THIS_MODULE, "sculld");
 	/*
 	 * Register with the driver core.
 	 */
@@ -530,6 +535,7 @@ int sculld_init(void)
 	return 0; /* succeed */
 
   fail_malloc:
+	class_destroy(sculld_class);
 	unregister_chrdev_region(dev, sculld_devs);
 	return result;
 }
@@ -546,11 +552,15 @@ void sculld_cleanup(void)
 
 	for (i = 0; i < sculld_devs; i++) {
 		unregister_ldd_device(&sculld_devices[i].ldev);
+		if(sculld_class)
+			device_destroy(sculld_class, sculld_major+i);
 		cdev_del(&sculld_devices[i].cdev);
 		sculld_trim(sculld_devices + i);
 	}
 	kfree(sculld_devices);
 	unregister_ldd_driver(&sculld_driver);
+	if(sculld_class)
+		class_destroy(sculld_class);
 	unregister_chrdev_region(MKDEV (sculld_major, 0), sculld_devs);
 }
 

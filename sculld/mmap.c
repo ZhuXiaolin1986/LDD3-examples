@@ -81,6 +81,7 @@ static int sculld_vma_nopage(struct vm_fault *vmf)
 	if (ptr && ptr->data) pageptr = ptr->data[offset];
 	if (!pageptr) goto out; /* hole or end-of-file */
 
+	page = vmalloc_to_page(pageptr);
 	/* got it, now increment the count */
 	get_page(page);
 	vmf->page = page;
