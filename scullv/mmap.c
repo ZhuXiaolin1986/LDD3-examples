@@ -75,11 +75,11 @@ static int scullv_vma_nopage(struct vm_fault *vmf)
 	 * accessing the hole.
 	 */
 	offset >>= PAGE_SHIFT; /* offset is a number of pages */
-	for (ptr = dev; ptr && offset >= dev->qset;) {
+	for (ptr = dev; ptr && offset >= (dev->qset << dev->order);) {
 		ptr = ptr->next;
-		offset -= dev->qset;
+		offset -= (dev->qset << dev->order);
 	}
-	if (ptr && ptr->data) pageptr = ptr->data[offset];
+	if (ptr && ptr->data) pageptr = ptr->data[offset >> dev->order] + (offset << PAGE_SHIFT);
 	if (!pageptr) goto out; /* hole or end-of-file */
 
 	/*

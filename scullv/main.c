@@ -45,6 +45,7 @@ MODULE_AUTHOR("Alessandro Rubini");
 MODULE_LICENSE("Dual BSD/GPL");
 
 struct scullv_dev *scullv_devices; /* allocated in scullv_init */
+static struct class *scullv_class = NULL;
 
 int scullv_trim(struct scullv_dev *dev);
 void scullv_cleanup(void);
@@ -447,6 +448,9 @@ static void scullv_setup_cdev(struct scullv_dev *dev, int index)
 	/* Fail gracefully if need be */
 	if (err)
 		printk(KERN_NOTICE "Error %d adding scull%d", err, index);
+
+	if(scullv_class)
+		device_create(scullv_class, NULL, devno, NULL, "scullv%d", index);
 }
 
 
@@ -472,6 +476,7 @@ int scullv_init(void)
 	if (result < 0)
 		return result;
 
+	scullv_class = class_create(THIS_MODULE, "scullv");
 	
 	/* 
 	 * allocate the devices -- we can't have them static, as the number
@@ -497,6 +502,7 @@ int scullv_init(void)
 	return 0; /* succeed */
 
   fail_malloc:
+	class_destroy(scullv_class);
 	unregister_chrdev_region(dev, scullv_devs);
 	return result;
 }
@@ -512,10 +518,14 @@ void scullv_cleanup(void)
 #endif
 
 	for (i = 0; i < scullv_devs; i++) {
+		if(scullv_class)
+			device_destroy(scullv_class, MKDEV(scullv_major, i));
 		cdev_del(&scullv_devices[i].cdev);
 		scullv_trim(scullv_devices + i);
 	}
 	kfree(scullv_devices);
+	if(scullv_class)
+		class_destroy(scullv_class);
 	unregister_chrdev_region(MKDEV (scullv_major, 0), scullv_devs);
 }
 
