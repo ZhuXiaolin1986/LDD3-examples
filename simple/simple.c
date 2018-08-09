@@ -36,6 +36,7 @@ module_param(simple_major, int, 0);
 MODULE_AUTHOR("Jonathan Corbet");
 MODULE_LICENSE("Dual BSD/GPL");
 
+static struct class *simple_class = NULL;
 
 /*
  * Closing is just as simpler.
@@ -114,6 +115,9 @@ static void simple_setup_cdev(struct cdev *dev, int minor,
 	/* Fail gracefully if need be */
 	if (err)
 		printk (KERN_NOTICE "Error %d adding simple%d", err, minor);
+
+	if(simple_class)
+		device_create(simple_class, NULL, devno, NULL, "simple%d", minor);
 }
 
 
@@ -167,6 +171,7 @@ static int simple_init(void)
 	if (simple_major == 0)
 		simple_major = result;
 
+	simple_class = class_create(THIS_MODULE, "simple");
 	/* Now set up two cdevs. */
 	simple_setup_cdev(SimpleDevs, 0, &simple_remap_ops);
 	simple_setup_cdev(SimpleDevs + 1, 1, &simple_nopage_ops);
@@ -176,8 +181,15 @@ static int simple_init(void)
 
 static void simple_cleanup(void)
 {
+	if(simple_class)
+	{
+		device_destroy(simple_class, MKDEV(simple_major, 0));
+		device_destroy(simple_class, MKDEV(simple_major, 1));
+	}
 	cdev_del(SimpleDevs);
 	cdev_del(SimpleDevs + 1);
+	if(simple_class)
+		class_destroy(simple_class);
 	unregister_chrdev_region(MKDEV(simple_major, 0), 2);
 }
 
