@@ -553,7 +553,7 @@ void sculld_cleanup(void)
 	for (i = 0; i < sculld_devs; i++) {
 		unregister_ldd_device(&sculld_devices[i].ldev);
 		if(sculld_class)
-			device_destroy(sculld_class, MKDEV(sculld_major, i);
+			device_destroy(sculld_class, MKDEV(sculld_major, i));
 		cdev_del(&sculld_devices[i].cdev);
 		sculld_trim(sculld_devices + i);
 	}

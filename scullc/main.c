@@ -519,7 +519,7 @@ void scullc_cleanup(void)
 
 	for (i = 0; i < scullc_devs; i++) {
 		if(scullc_class)
-			device_destroy(scullc_class, MKDEV(scullc_major, i);
+			device_destroy(scullc_class, MKDEV(scullc_major, i));
 		cdev_del(&scullc_devices[i].cdev);
 		scullc_trim(scullc_devices + i);
 	}
