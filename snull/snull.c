@@ -458,8 +458,9 @@ static void snull_hw_tx(char *buf, int len, struct net_device *dev)
 	saddr = &ih->saddr;
 	daddr = &ih->daddr;
 
-	((u8 *)saddr)[2] ^= 1; /* change the third octet (class C) */
-	((u8 *)daddr)[2] ^= 1;
+	/* ReadMe.txt */
+	((u8 *)saddr)[2] ^= 7; /* change the third octet (class C) */
+	((u8 *)daddr)[2] ^= 7;
 
 	ih->check = 0;         /* and rebuild the checksum (ip needs it) */
 	ih->check = ip_fast_csum((unsigned char *)ih,ih->ihl);
