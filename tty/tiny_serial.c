@@ -279,6 +279,12 @@ static struct uart_driver tiny_reg = {
 	.nr		= UART_NR,
 };
 
+static void tiny_exit(void)
+{
+	uart_remove_one_port(&tiny_reg, &tiny_port);
+	uart_unregister_driver(&tiny_reg);
+}
+
 static int __init tiny_init(void)
 {
 	int result;
@@ -297,3 +303,4 @@ static int __init tiny_init(void)
 }
 
 module_init(tiny_init);
+module_exit(tiny_exit);
