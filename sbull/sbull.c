@@ -97,6 +97,7 @@ static void sbull_transfer(struct sbull_dev *dev, unsigned long sector,
 	unsigned long offset = sector*KERNEL_SECTOR_SIZE;
 	unsigned long nbytes = nsect*KERNEL_SECTOR_SIZE;
 
+    printk(KERN_INFO "sbull_transfer \n");
 	if ((offset + nbytes) > dev->size) {
 		printk (KERN_NOTICE "Beyond-end write (%ld %ld)\n", offset, nbytes);
 		return;
@@ -115,6 +116,7 @@ static void sbull_request(struct request_queue *q)
 	struct request *req;
 	int ret;
 
+    printk(KERN_INFO "sbull_request \n");
 	req = blk_fetch_request(q);
 	while (req) {
 		struct sbull_dev *dev = req->rq_disk->private_data;
@@ -146,6 +148,7 @@ static int sbull_xfer_bio(struct sbull_dev *dev, struct bio *bio)
 	unsigned long flags;
 	sector_t sector = bio->bi_iter.bi_sector;
 
+    printk(KERN_INFO "sbull_xfer_bio \n");
 	/* Do each segment independently. */
 	bio_for_each_segment(bvec, bio, iter) {
 		char *buffer = bvec_kmap_irq(&bvec, &flags);
@@ -166,6 +169,7 @@ static int sbull_xfer_request(struct sbull_dev *dev, struct request *req)
 	struct bio *bio;
 	int nsect = 0;
     
+    printk(KERN_INFO "sbull_xfer_request \n");
 	__rq_for_each_bio(bio, req) {
 		sbull_xfer_bio(dev, bio);
 		nsect += bio->bi_iter.bi_size/KERNEL_SECTOR_SIZE;
@@ -184,6 +188,7 @@ static void sbull_full_request(struct request_queue *q)
 	struct sbull_dev *dev = q->queuedata;
 	int ret;
 
+    printk(KERN_INFO "sbull_full_request \n");
 	while ((req = blk_fetch_request(q)) != NULL) {
 		if (blk_rq_is_passthrough(req)) {
 			printk (KERN_NOTICE "Skip non-fs request\n");
@@ -207,6 +212,7 @@ static blk_qc_t sbull_make_request(struct request_queue *q, struct bio *bio)
 	struct sbull_dev *dev = q->queuedata;
 	int status;
 
+    printk(KERN_INFO "sbull_make_request\n");
 	status = sbull_xfer_bio(dev, bio);
 	bio->bi_status = status;
 	bio_endio(bio);
@@ -222,6 +228,7 @@ static int sbull_open(struct block_device *bdev, fmode_t mode)
 {
 	struct sbull_dev *dev = bdev->bd_disk->private_data;
 
+    printk(KERN_INFO "sbull_open\n");
 	del_timer_sync(&dev->timer);
 	spin_lock(&dev->lock);
 	if (! dev->users) 
@@ -238,6 +245,7 @@ static void sbull_release(struct gendisk *disk, fmode_t mode)
 	spin_lock(&dev->lock);
 	dev->users--;
 
+    printk(KERN_INFO "sbull_release\n");
 	if (!dev->users) {
 		dev->timer.expires = jiffies + INVALIDATE_DELAY;
 		add_timer(&dev->timer);
@@ -253,6 +261,7 @@ int sbull_media_changed(struct gendisk *gd)
 {
 	struct sbull_dev *dev = gd->private_data;
 	
+    printk(KERN_INFO "sbull_media_changed\n");
 	return dev->media_change;
 }
 
@@ -264,6 +273,7 @@ int sbull_revalidate(struct gendisk *gd)
 {
 	struct sbull_dev *dev = gd->private_data;
 	
+    printk(KERN_INFO "sbull_revalidate\n");
 	if (dev->media_change) {
 		dev->media_change = 0;
 		memset (dev->data, 0, dev->size);
@@ -279,6 +289,7 @@ void sbull_invalidate(struct timer_list *item)
 {
 	struct sbull_dev *dev = from_timer(dev, item, timer);
 
+    printk(KERN_INFO "sbull_invalidate\n");
 	spin_lock(&dev->lock);
 	if (dev->users || !dev->data) 
 		printk (KERN_WARNING "sbull: timer sanity check failed\n");
@@ -298,6 +309,8 @@ int sbull_ioctl (struct block_device *bdev,
 	long size;
 	struct hd_geometry geo;
 	struct sbull_dev *dev = bdev->bd_disk->private_data;
+
+    printk(KERN_INFO "sbull_ioctl\n");
 
 	switch(cmd) {
 	    case HDIO_GETGEO:
@@ -340,6 +353,7 @@ static struct block_device_operations sbull_ops = {
  */
 static void setup_device(struct sbull_dev *dev, int which)
 {
+    printk(KERN_INFO "sbull_setup_device\n");
 	/*
 	 * Get some memory.
 	 */
@@ -418,6 +432,7 @@ static int __init sbull_init(void)
 	/*
 	 * Get registered.
 	 */
+    printk(KERN_INFO "sbull_init\n");
 	sbull_major = register_blkdev(sbull_major, "sbull");
 	if (sbull_major <= 0) {
 		printk(KERN_WARNING "sbull: unable to get major number\n");
@@ -443,6 +458,7 @@ static void sbull_exit(void)
 {
 	int i;
 
+    printk(KERN_INFO "sbull_exit\n");
 	for (i = 0; i < ndevices; i++) {
 		struct sbull_dev *dev = Devices + i;
 
